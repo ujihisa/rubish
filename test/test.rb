@@ -11,19 +11,18 @@ require 'test/unit'
 require 'thread'
 gem 'thoughtbot-shoulda'
 require 'shoulda'
-
 require 'set'
-  
+
 if ARGV.first == "dev"
   TUT_ = Test::Unit::TestCase
   # create a dummy empty case to disable all tests
   # except the one we are developing
   class TUT
-    def self.should(*args,&block)
+    def self.should(*args, &block)
       nil
     end
 
-    def self.context(*args,&block)
+    def self.context(*args, &block)
       nil
     end
   end
@@ -67,10 +66,10 @@ module Helper
   class << self
     def cat(data)
       rsh {
-        cat.i { |p| p.puts data}
+        cat.i {|p| p.puts data }
       }
     end
-    
+
     def time_elapsed
       t1 = Time.now
       yield
@@ -80,7 +79,7 @@ module Helper
     def slowcat(n)
       rsh {
         lines = (1..n).to_a
-        ruby("../slowcat.rb").i { |p| p.puts lines }
+        ruby("../slowcat.rb").i {|p| p.puts lines }
       }
     end
 
@@ -97,8 +96,8 @@ module Helper
       }, Test::Unit::Assertions
     end
 
-    def context(i=nil,o=nil,e=nil)
-      Rubish::Context.singleton.derive(nil,i,o,e)
+    def context(i=nil, o=nil, e=nil)
+      Rubish::Context.singleton.derive(nil, i, o, e)
     end
   end
 end
@@ -108,9 +107,9 @@ module IOHelper
     def created_ios
       set1 = Set.new
       set2 = Set.new
-      ObjectSpace.each_object(IO) { |o| set1 << o }
+      ObjectSpace.each_object(IO) {|o| set1 << o }
       yield
-      ObjectSpace.each_object(IO) { |o| set2 << o }
+      ObjectSpace.each_object(IO) {|o| set2 << o }
       set2 - set1
     end
   end
@@ -128,7 +127,7 @@ class Rubish::Test < TUT
       assert_equal TEST_DIR, pwd.first
       mkdir("dir").exec
       cd "dir" do
-        assert_equal "#{TEST_DIR}/dir", pwd.first
+        assert_equal "#{TEST_DIR }/dir", pwd.first
       end
       assert_equal TEST_DIR, pwd.first
     }
@@ -139,7 +138,7 @@ class Rubish::Test < TUT
       assert_equal TEST_DIR, pwd.first
       mkdir("dir").exec
       cd "dir"
-      assert_equal "#{TEST_DIR}/dir", pwd.first
+      assert_equal "#{TEST_DIR }/dir", pwd.first
       cd TEST_DIR
       assert_equal TEST_DIR, pwd.first
     }
@@ -150,7 +149,7 @@ end
 class Rubish::Test::Workspace < TUT
   # Remember that Object#methods of Workspace
   # instances are aliased with the prefix '__'
-  
+
   def setup
     setup_tmp
   end
@@ -173,8 +172,6 @@ class Rubish::Test::Workspace < TUT
       assert ws.__respond_to?(:____id__)
       assert ws.__respond_to?(:____send__)
     }
-    
-
   end
 
   should "not introduce bindings to parent workspace" do
@@ -212,7 +209,7 @@ class Rubish::Test::Workspace::Base < TUT
         def foo
           1
         end
-        
+
         assert_equal c1, context.parent
         assert_instance_of Rubish::Command, ls
         assert_equal 1, foo
@@ -221,35 +218,33 @@ class Rubish::Test::Workspace::Base < TUT
           assert_equal ws2, context.workspace
           assert_equal 1, foo
           acc = []
-          c2 = with(current_workspace.derive {def foo; 3 end})
+          c2 = with(current_workspace.derive {def foo; 3 end })
           c2.eval {
             assert_equal 3, foo
           }
-          c2.eval {def foo; 33; end}
-          c2.eval {assert_equal 33, foo}
-          
+          c2.eval {def foo; 33; end }
+          c2.eval {assert_equal 33, foo }
+
           with(c1) { # explicitly derive from a specified context
             assert_equal c1, context.parent, "should derive from given context"
-          }}}
+          } }}
       assert_instance_of Rubish::Command, foo
     }
   end
-  
 end
 
 class Rubish::Test::IO < TUT
-
   def setup
     setup_tmp
   end
 
   should "chomp lines for each/map" do
     rsh {
-      ints = (1..100).to_a.map { |i| i.to_s }
-      cat.o("output").i { |p| p.puts(ints)}.exec
+      ints = (1..100).to_a.map {|i| i.to_s }
+      cat.o("output").i {|p| p.puts(ints) }.exec
       # raw access to pipe would have newlines
       cat.i("output").o do |p|
-        p.each { |l| assert l.chomp!
+        p.each {|l| assert l.chomp!
         }
       end.exec
       # iterator would've chomped the lines
@@ -258,27 +253,27 @@ class Rubish::Test::IO < TUT
       end
     }
   end
-  
+
   should "redirect io" do
     rsh {
-      ints = (1..100).to_a.map { |i| i.to_s }
-      cat.o("output").i { |p| p.puts(ints)}.exec
+      ints = (1..100).to_a.map {|i| i.to_s }
+      cat.o("output").i {|p| p.puts(ints) }.exec
       assert_equal ints, cat.i("output").map
-      assert_equal ints, p { cat; cat; cat}.i("output").map
-      assert_equal ints, cat.i { |p| p.puts(ints) }.map
+      assert_equal ints, p { cat; cat; cat }.i("output").map
+      assert_equal ints, cat.i {|p| p.puts(ints) }.map
     }
   end
 
   should "close pipes used for io redirects" do
     rsh {
       ios = IOHelper.created_ios do
-        cat.i { |p| p.puts "foobar" }.o { |p| p.readlines }.exec
+        cat.i {|p| p.puts "foobar" }.o {|p| p.readlines }.exec
       end
-      assert ios.all? { |io| io.closed? }
+      assert ios.all? {|io| io.closed? }
       ios = IOHelper.created_ios do
-        cat.i { |p| p.puts "foobar" }.o("output").exec
+        cat.i {|p| p.puts "foobar" }.o("output").exec
       end
-      assert ios.all? { |io| io.closed? }
+      assert ios.all? {|io| io.closed? }
     }
   end
 
@@ -296,11 +291,11 @@ class Rubish::Test::IO < TUT
       assert_not $stderr.closed?
     }
   end
-  
+
   should "not close io if redirecting to existing IO object" do
     rsh {
       begin
-        f = File.open("/dev/null","w")
+        f = File.open("/dev/null", "w")
         ios = IOHelper.created_ios do
           ls.o(f).exec
         end
@@ -311,49 +306,46 @@ class Rubish::Test::IO < TUT
       end
     }
   end
-
-  
 end
 
 class Rubish::Test::Executable < TUT
-
   def setup
     setup_tmp
   end
 
   should "set result to good exits" do
     rsh {
-      r = cat.i { |p| p.puts 1}.exec
+      r = cat.i {|p| p.puts 1 }.exec
       assert_equal 1, r.size
       assert_equal 0, r.first.exitstatus
     }
   end
-    
-  should "head,first/tail,last" do
+
+  should "head, first/tail, last" do
     rsh {
       ls_in_order = p { ls; sort :n }
-      files = (1..25).to_a.map { |i| i.to_s }
+      files = (1..25).to_a.map {|i| i.to_s }
       exec touch(files)
       assert_equal 25, ls.map.size
       assert_equal 1, ls.head.size
       assert_equal "1", ls_in_order.first
       assert_equal \
-       (1..10).to_a.map { |i| i.to_s },
+       (1..10).to_a.map {|i| i.to_s },
        ls_in_order.head(10)
       assert_equal 25, ls.head(100).size
 
       assert_equal 1, ls.tail.size
       assert_equal "25", ls_in_order.last
       assert_equal \
-       (16..25).to_a.map { |i| i.to_s },
+       (16..25).to_a.map {|i| i.to_s },
        ls_in_order.tail(10)
       assert_equal 25, ls.tail(100).size
     }
   end
-  
+
   should "quote exec arguments" do
     rsh {
-      files = ["a b","c d"]
+      files = ["a b", "c d"]
       # without quoting
       exec touch(files)
       assert_equal 4, ls.map.size
@@ -364,17 +356,17 @@ class Rubish::Test::Executable < TUT
       assert_equal 2, ls.map.size
       exec rm(files).q
       assert_equal 0, ls.map.size
-      
+
     }
   end
 
   should "raise when exit status not zero" do
     rsh {
-      
+
       r = assert_raise(Rubish::Job::Failure) {
         foobarqux_is_no_command.exec
       }
-      
+
       begin
         foobarqux_is_no_command.exec
       rescue Rubish::Job::Failure => e
@@ -384,14 +376,13 @@ class Rubish::Test::Executable < TUT
         # the result should be the processes that
         # exit properly. in this case, the empty
         # array.
-        assert j.result.empty? 
+        assert j.result.empty?
         assert_equal 1, e.reason.exitstatuses.size
         assert_not_equal 0, e.reason.exitstatuses.first.exitstatus
       end
-      
+
     }
   end
-  
 end
 
 class Rubish::Test::Pipe < TUT
@@ -401,13 +392,13 @@ class Rubish::Test::Pipe < TUT
 
   should "build pipe with a block in workspace" do
     rsh {
-      pipe = p { cat ; cat ; cat}
+      pipe = p { cat ; cat ; cat }
       assert_instance_of Rubish::Pipe, pipe
       assert_equal 3, pipe.cmds.length
-      assert_equal 1, pipe.i { |p| p.puts 1 }.first.to_i
+      assert_equal 1, pipe.i {|p| p.puts 1 }.first.to_i
 
       # specify a workspace to build pipe with
-      pipe2 = Rubish::Pipe.build(current_workspace.derive { def foo; abcde; end}) {
+      pipe2 = Rubish::Pipe.build(current_workspace.derive { def foo; abcde; end }) {
         foo
         foo
       }
@@ -419,11 +410,11 @@ class Rubish::Test::Pipe < TUT
   should "build pipe with an array" do
     rsh {
       # tee to 10 files along the pipeline
-      tees = (1..10).map { |i| tee "o#{i}" }
-      p(tees).i { |p| p.puts "1" }.exec
+      tees = (1..10).map {|i| tee "o#{i }" }
+      p(tees).i {|p| p.puts "1" }.exec
       assert_equal 10, ls.map.length
-      (1..10).map { |i|
-        assert_equal 1, cat("o#{i}").first.to_i
+      (1..10).map {|i|
+        assert_equal 1, cat("o#{i }").first.to_i
       }
     }
   end
@@ -438,7 +429,7 @@ class Rubish::Test::Streamer < TUT
     rsh {
       cataa = Helper.cat("aa")
       output = cataa.o
-      assert_equal "aa", cataa.sed {p}.first
+      assert_equal "aa", cataa.sed {p }.first
       assert_equal output, cataa.o
     }
   end
@@ -448,18 +439,18 @@ class Rubish::Test::Streamer < TUT
       assert_equal "aa", Helper.cat("aa").sed { p }.sed { p }.sed { p }.first
     }
   end
-  
+
   should "sed with s and gs" do
     rsh {
       # aa => iia => eyeeyea
-      assert_equal "eyeeyea",  Helper.cat("aa").sed { s /a/, "ii"; gs /i/, "eye"; p}.first
+      assert_equal "eyeeyea",  Helper.cat("aa").sed { s /a/, "ii"; gs /i/, "eye"; p }.first
     }
   end
 
   should "peek" do
     rsh {
       rs = Helper.cat((1..10).to_a).awk {
-        collect(:three,[line,*peek(2)])
+        collect(:three, [line, *peek(2)])
       }.end { three }.exec
       assert_equal [["1", "2", "3"],
                     ["2", "3", "4"],
@@ -477,36 +468,35 @@ class Rubish::Test::Streamer < TUT
   should "skip" do
     rsh {
       rs = Helper.cat((1..10).to_a).awk {
-        collect(:three,[line,*peek(2)])
+        collect(:three, [line, *peek(2)])
         skip(2)
       }.end { three }.exec
       assert_equal [["1", "2", "3"],
                     ["4", "5", "6"],
                     ["7", "8", "9"],
                     ["10"]], rs
-      
+
     }
   end
-  
+
   should "trigger by position" do
-    assert_equal "1", Helper.cat((1..10).to_a).sed(:bof){p}.first
-    assert_equal "10", Helper.cat((1..10).to_a).sed(:eof){p}.first
-    assert_equal "1", Helper.cat((1..10).to_a).sed(1){p}.first
-    assert_equal "10", Helper.cat((1..10).to_a).sed(-1){p}.first
-    assert_equal ["1","10"], Helper.cat((1..10).to_a).sed(/1/){p}.map
-    rs = Helper.cat((1..10).to_a).sed(1) { p "a1"; done}.act { p "b" + line }.map
+    assert_equal "1", Helper.cat((1..10).to_a).sed(:bof){p }.first
+    assert_equal "10", Helper.cat((1..10).to_a).sed(:eof){p }.first
+    assert_equal "1", Helper.cat((1..10).to_a).sed(1){p }.first
+    assert_equal "10", Helper.cat((1..10).to_a).sed(-1){p }.first
+    assert_equal ["1", "10"], Helper.cat((1..10).to_a).sed(/1/){p }.map
+    rs = Helper.cat((1..10).to_a).sed(1) { p "a1"; done }.act { p "b" + line }.map
     assert_equal rs, ["a1", "b2", "b3", "b4", "b5", "b6", "b7", "b8", "b9", "b10"]
   end
 
   should "trigger by range" do
-    assert_equal ["3","4","5"], Helper.cat((1..10).to_a).sed(3,5) { p }.map
-    assert_equal ["8","9","10"], Helper.cat((1..10).to_a).sed(8,:eof) { p }.map
+    assert_equal ["3", "4", "5"], Helper.cat((1..10).to_a).sed(3, 5) { p }.map
+    assert_equal ["8", "9", "10"], Helper.cat((1..10).to_a).sed(8, :eof) { p }.map
     assert_equal \
       ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"],
-      Helper.cat((1..10).to_a).sed(:bof,:eof) { p }.map
-    assert_equal ["b","c","b"], Helper.cat(["a","a","b","c","b","a","a"]).sed(/b/,/b/) { p }.map
+      Helper.cat((1..10).to_a).sed(:bof, :eof) { p }.map
+    assert_equal ["b", "c", "b"], Helper.cat(["a", "a", "b", "c", "b", "a", "a"]).sed(/b/, /b/) { p }.map
   end
-
 end
 
 
@@ -516,8 +506,8 @@ class Rubish::Test::Context < TUT
   end
 
   should "stack contexts" do
-    c1 = Helper.context(nil,"c1_out")
-    c2 = Helper.context(nil,"c2_out")
+    c1 = Helper.context(nil, "c1_out")
+    c2 = Helper.context(nil, "c2_out")
     c1.eval {
       # the following "context" is a binding
       # introduced by the default workspace. It
@@ -534,7 +524,7 @@ class Rubish::Test::Context < TUT
       }
     }
   end
-  
+
   should "use context specific workspace" do
     Helper.context.eval {
       assert_equal 1, foo1
@@ -546,11 +536,10 @@ class Rubish::Test::Context < TUT
 
   should "use context specific IO" do
     output =  "context-output"
-    c = Helper.context(nil,output)
+    c = Helper.context(nil, output)
     c.eval {
-      
       assert_equal output, Rubish::Context.current.o
-      cat.i { |p| p.puts 1}.exec
+      cat.i {|p| p.puts 1 }.exec
       assert_equal 1, cat.i(output).first.to_i
     }
   end
@@ -568,8 +557,6 @@ class Rubish::Test::Context < TUT
     assert_equal c11, c111.parent
 
     assert_nil c2.parent
-    
-    
   end
 
   should "derive context, using the context attributes of the original" do
@@ -603,7 +590,6 @@ class Rubish::Test::Context < TUT
     assert_equal o1, orig.o
     assert_equal e1, orig.err
     assert_instance_of Rubish::Command, orig.eval { foo }
-    
   end
 
   should "use context specific job_controls" do
@@ -612,14 +598,14 @@ class Rubish::Test::Context < TUT
       slow = Helper.slowcat(1)
       j1 = slow.exec!
 
-      jc2, j2 = nil 
+      jc2, j2 = nil
       with {
-        jc2 = job_control 
+        jc2 = job_control
         j2 = slow.exec!
       }
 
       assert_not_equal jc1, jc2
-      
+
       assert_equal [j1], jc1.jobs
       assert_equal [j2], jc2.jobs
 
@@ -633,11 +619,9 @@ class Rubish::Test::Context < TUT
       assert jc2.jobs.empty?
     }
   end
-  
 end
 
 class Rubish::Test::Job < TUT
-  
   def setup
     setup_tmp
   end
@@ -653,17 +637,17 @@ class Rubish::Test::Job < TUT
 
       assert_equal jc1, j1.job_control
       assert_not_equal jc2, j1.job_control
-      
+
       assert_raise(Rubish::Error) {
         jc2.remove(j1)
       }
-      
+
     }
   end
 
   should "set result to array of exit statuses" do
     rsh {
-      ls.exec.each { |status|
+      ls.exec.each {|status|
         assert_instance_of Process::Status, status
         assert_equal 0, status.exitstatus
       }
@@ -672,21 +656,21 @@ class Rubish::Test::Job < TUT
 
   should "map in parrallel to different array" do
     slow = Helper.slowcat(1)
-    a1, a2, a3 = [[],[],[]]
+    a1, a2, a3 = [[], [], []]
     j1 = slow.map! a1
     j2 = slow.map! a2
     j3 = slow.map! a3
-    js = [j1,j2,j3]
+    js = [j1, j2, j3]
     t = Helper.time_elapsed {
-      js.each { |j| j.wait }
+      js.each {|j| j.wait }
     }
     assert_in_delta 1, t, 0.1
     assert j1.done? && j2.done? && j3.done?
-    rs = [a1,a2,a3]
+    rs = [a1, a2, a3]
     # each result should be an array of sized 3
-    assert(rs.all? { |r| r.size == 1 })
+    assert(rs.all? {|r| r.size == 1 })
     # should be accumulated into different arrays
-    assert_equal(3,rs.map{|r| r.object_id }.uniq.size)
+    assert_equal(3, rs.map{|r| r.object_id }.uniq.size)
   end
 
   should "map in parrallel to thread safe queue" do
@@ -695,7 +679,7 @@ class Rubish::Test::Job < TUT
     j1 = slow.map! acc
     j2 = slow.map! acc
     j3 = slow.map! acc
-    js = [j1,j2,j3]
+    js = [j1, j2, j3]
     t = Helper.time_elapsed {
       j1.wait; j2.wait; j3.wait
     }
@@ -712,7 +696,7 @@ class Rubish::Test::Job < TUT
     assert_in_delta 0.1, t, 1
     assert_equal true, job.done?
   end
-  
+
   should "raise when waited twice" do
     assert_raise(Rubish::Error) {
       rsh {
@@ -742,16 +726,11 @@ class Rubish::Test::Job < TUT
     assert_in_delta 2, acc.size, 1, "expects to get roughly two lines out before killing process"
     assert_in_delta 2, t, 0.1
     assert j.done?
-    
-    
-    
   end
-  
 end
 
 
 class Rubish::Test::JobControl < TUT
-
   should "use job control" do
     rsh {
       slow = Helper.slowcat(1).o "/dev/null"
@@ -768,25 +747,22 @@ class Rubish::Test::JobControl < TUT
       assert jobs.empty?, "expects jobs to empty"
     }
   end
-  
+
   should "job control waitall" do
     rsh {
       puts "slowcat 1 * 3 lines in sequence"
       slow = Helper.slowcat(1)
       cats = (1..3).to_a.map { slow.exec! }
       assert_equal 3, jobs.size
-      assert cats.all? { |cat| jobs.include?(cat) }
+      assert cats.all? {|cat| jobs.include?(cat) }
       t = Helper.time_elapsed { waitall }
       assert_in_delta 1, t, 0.1
       assert jobs.empty?
     }
   end
-
 end
 
-
 class Rubish::Test::Batch < TUT
-
   def setup
     setup_tmp
   end
@@ -812,7 +788,7 @@ class Rubish::Test::Batch < TUT
         assert_nil j.result
         assert jobs.empty?
       end
-      
+
       assert_raise(Rubish::Job::Failure) {
         j = b.exec!
         j.wait
@@ -823,19 +799,18 @@ class Rubish::Test::Batch < TUT
     }
   end
 
-  
   should "do batch as job" do
     rsh {
       b = batch {
-        cat.i { |p| p.puts((1..10).to_a) }.exec
-        cat.i { |p| p.puts((11..20).to_a) }.exec
+        cat.i {|p| p.puts((1..10).to_a) }.exec
+        cat.i {|p| p.puts((11..20).to_a) }.exec
         :result
       }
 
-      rs = b.map { |i| i.to_i }
+      rs = b.map {|i| i.to_i }
       assert jobs.empty?
       assert_equal (1..20).to_a, rs
-      
+
       j1 = b.exec!
       assert_equal [j1], jobs
       j1.wait
@@ -843,35 +818,31 @@ class Rubish::Test::Batch < TUT
       assert_equal :result, j1.result
       assert jobs.empty?
     }
-    
   end
-  
-  
+
   should "use context's IOs to execute in a batch" do
     rsh {
       b = batch {
         # use the contextual stdioe
-        cat.i { |p| p.puts((1..10).to_a) }.exec
+        cat.i {|p| p.puts((1..10).to_a) }.exec
         # fix the output to bo2, only for this executable
-        cat.i { |p| p.puts((100..110).to_a) }.o("bo2").exec
+        cat.i {|p| p.puts((100..110).to_a) }.o("bo2").exec
       }.o("bo1")
-      
+
       b.exec
       assert jobs.empty?
-      assert_equal (1..10).to_a, cat.i("bo1").map { |i| i.to_i }
-      assert_equal (100..110).to_a, cat.i("bo2").map { |i| i.to_i }
+      assert_equal (1..10).to_a, cat.i("bo1").map {|i| i.to_i }
+      assert_equal (100..110).to_a, cat.i("bo2").map {|i| i.to_i }
 
       rm("*").exec
       b.o("bo3").exec
       assert jobs.empty?
       assert !File.exist?("bo1")
-      assert_equal (1..10).to_a, cat.i("bo3").map { |i| i.to_i }
-      assert_equal (100..110).to_a, cat.i("bo2").map { |i| i.to_i }
-      
+      assert_equal (1..10).to_a, cat.i("bo3").map {|i| i.to_i }
+      assert_equal (100..110).to_a, cat.i("bo2").map {|i| i.to_i }
     }
-    
   end
-  
+
   should "be concurrent" do
     rsh {
       slow = Helper.slowcat(1)
@@ -892,5 +863,4 @@ class Rubish::Test::Batch < TUT
       assert jobs.empty?
     }
   end
-  
 end
